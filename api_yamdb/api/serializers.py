@@ -7,13 +7,17 @@ class CategoriesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Categories
         fields = ('name', 'slug')
+        lookup_field = 'slug'
 
 class GenresSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genres
         fields = ('name', 'slug')
+        lookup_field = 'slug'
 
 class TitlesSerializer(serializers.ModelSerializer):
+    category = CategoriesSerializer()
+    genre = GenresSerializer(many=True)
     class Meta:
         model = Titles
-        fields = '__all__'
+        fields = ('id', 'name', 'year', 'rating', 'description', 'genre', 'category')
