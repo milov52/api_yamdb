@@ -66,7 +66,6 @@ DATABASES = {
     }
 }
 
-
 # Password validation
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -84,6 +83,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTH_USER_MODEL = 'reviews.User'
 
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
