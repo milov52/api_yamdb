@@ -1,6 +1,6 @@
 from csv import DictReader
 from django.core.management import BaseCommand
-
+import csv
 # Import the model
 from reviews.models import Categories, Genres, Titles, GenreTitles, User
 
@@ -12,7 +12,7 @@ class Command(BaseCommand):
             Categories.objects.all().delete()
 
         print("Import Categories")
-        for row in DictReader(open('./static/data/category.csv')):
+        for row in DictReader(open('./static/data/category.csv', encoding='utf-8')):
             category = Categories(id=row['id'], name=row['name'], slug=row['slug'])
             category.save()
         print("Import Categories done")
@@ -21,7 +21,7 @@ class Command(BaseCommand):
             Genres.objects.all().delete()
 
         print("Import Genres")
-        for row in DictReader(open('./static/data/genre.csv')):
+        for row in DictReader(open('./static/data/genre.csv', encoding='utf-8')):
             genre = Genres(id=row['id'], name=row['name'], slug=row['slug'])
             genre.save()
         print("Import Genres done")
@@ -30,7 +30,7 @@ class Command(BaseCommand):
             Titles.objects.all().delete()
 
         print("Import Titles")
-        for row in DictReader(open('./static/data/titles.csv')):
+        for row in DictReader(open('./static/data/titles.csv', encoding='utf-8')):
             category = Categories.objects.get(id=row['category'])
             title = Titles(id=row['id'], name=row['name'], year=row['year'], category=category)
             title.save()
@@ -40,14 +40,14 @@ class Command(BaseCommand):
             GenreTitles.objects.all().delete()
 
         print("Import Genre_Title")
-        for row in DictReader(open('./static/data/genre_title.csv')):
+        for row in DictReader(open('./static/data/genre_title.csv', encoding='utf-8')):
             title = Titles.objects.get(id=row['title_id'])
             genre = Genres.objects.get(id=row['genre_id'])
             genretitle = GenreTitles(id=row['id'], title=title, genre=genre)
             genretitle.save()
         print("Import Genre_Title done")
 
-        for row in DictReader(open("./static/data/users.csv")):
+        for row in DictReader(open("./static/data/users.csv", encoding='utf-8')):
             user = User(
                 id=row["id"],
                 username=row["username"],
@@ -58,3 +58,4 @@ class Command(BaseCommand):
                 last_name=row['last_name']
             )
             user.save()
+
