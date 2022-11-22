@@ -7,7 +7,6 @@ from reviews.models import Categories, Genres, Titles, GenreTitles
 class Command(BaseCommand):
     def handle(self, *args, **options):
 
-        # Show this if the data already exist in the database
         if Categories.objects.exists():
             Categories.objects.all().delete()
 
@@ -36,6 +35,9 @@ class Command(BaseCommand):
             title.save()
         print("Import Titles done")
 
+        if GenreTitles.objects.exists():
+            GenreTitles.objects.all().delete()
+
         print("Import Genre_Title")
         for row in DictReader(open('./static/data/genre_title.csv')):
             title = Titles.objects.get(id=row['title_id'])
@@ -43,3 +45,15 @@ class Command(BaseCommand):
             genretitle = GenreTitles(id=row['id'], title=title, genre=genre)
             genretitle.save()
         print("Import Genre_Title done")
+
+        # for row in DictReader(open("./static/data/users.csv")):
+        #     user = Profile(
+        #         id=row["id"],
+        #         username=row["username"],
+        #         email=row["email"],
+        #         role=row["role"],
+        #         bio=row['bio'],
+        #         first_name=row['first_name'],
+        #         last_name = row['last_name']
+        #     )
+        #     user.save()

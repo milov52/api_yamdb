@@ -1,5 +1,21 @@
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.contrib.auth.models import AbstractUser
+
+class User(AbstractUser):
+    ROLE_CHOICES = (
+        ('user', 'User'),
+        ('moderator', 'Moderator'),
+        ('admin', 'Admin')
+    )
+
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='user')
+    bio = models.TextField(
+        'Биография',
+        blank=True,
+    )
+
+
 
 class Categories(models.Model):
     name = models.CharField(max_length=256)
@@ -21,17 +37,12 @@ class Titles(models.Model):
     name = models.CharField(max_length=255)
     year = models.IntegerField()
     rating = models.IntegerField(blank=True, null=True)
-    description = models.TextField()
+    description = models.TextField("Описание")
     category = models.ForeignKey(
-        Categories,
-        on_delete=models.SET_NULL,
-        related_name="title",
-        null=True
+        Categories, on_delete=models.SET_NULL, related_name="title", null=True
     )
-    genre = models.ManyToManyField(
-        Genres,
-        through='GenreTitles'
-    )
+    genre = models.ManyToManyField(Genres, through="GenreTitles")
+
     def __str__(self):
         return self.name
 
