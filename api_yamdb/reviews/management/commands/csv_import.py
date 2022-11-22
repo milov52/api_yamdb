@@ -2,7 +2,8 @@ from csv import DictReader
 from django.core.management import BaseCommand
 
 # Import the model
-from reviews.models import Categories, Genres, Titles, GenreTitles
+from reviews.models import Categories, Genres, Titles, GenreTitles, User
+
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
@@ -46,14 +47,14 @@ class Command(BaseCommand):
             genretitle.save()
         print("Import Genre_Title done")
 
-        # for row in DictReader(open("./static/data/users.csv")):
-        #     user = Profile(
-        #         id=row["id"],
-        #         username=row["username"],
-        #         email=row["email"],
-        #         role=row["role"],
-        #         bio=row['bio'],
-        #         first_name=row['first_name'],
-        #         last_name = row['last_name']
-        #     )
-        #     user.save()
+        for row in DictReader(open("./static/data/users.csv")):
+            user = User(
+                id=row["id"],
+                username=row["username"],
+                email=row["email"],
+                role=row["role"],
+                bio=row['bio'],
+                first_name=row['first_name'],
+                last_name=row['last_name']
+            )
+            user.save()

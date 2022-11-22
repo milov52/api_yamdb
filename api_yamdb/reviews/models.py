@@ -78,7 +78,7 @@ class Rewiews(models.Model):
         verbose_name = 'Отзыв'
         verbose_name_plural = 'Отзывы'
 
-class Comments(models.model):
+class Comments(models.Model):
     rewiew = models.ForeignKey(
         Rewiews,
         null=True,
