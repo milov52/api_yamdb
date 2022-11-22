@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 class Categories(models.Model):
     name = models.CharField(max_length=256)
@@ -34,6 +34,67 @@ class Titles(models.Model):
     )
     def __str__(self):
         return self.name
+
+class Rewiews(models.Model):
+    title = models.ForeignKey(
+        Titles,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name='rewiews',
+        verbose_name='отзыв к произведению'
+    )
+    text = models.TextField(
+        'Текст отзыва',
+        help_text='Введите текст отзыва'
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='rewiews',
+        verbose_name='автор отзыва'
+    )
+    score = models.PositiveIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(100)]
+        )
+    pub_date = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Дата отзыва'
+    )
+
+    class Meta:
+        ordering = ('-pub_date',)
+        verbose_name = 'Отзыв'
+        verbose_name_plural = 'Отзывы'
+
+class Comments(models.model):
+    rewiew = models.ForeignKey(
+        Rewiews,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name='comments',
+        verbose_name='комментарий к отзыву'
+    )
+    text = models.TextField(
+        'текст комментария',
+        help_text='введите текст комментария'
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='comments',
+        verbose_name='автор комментария'
+    )
+    pub_date = models.DateTimeField(
+        auto_now=True,
+        verbose_name='дата комментария'
+    )
+
+    class Meta:
+        ordering = ('-pub_date',)
+        verbose_name = 'Комментарий'
+        verbose_name_plural = 'Комментарии'
 
 
 class GenreTitles(models.Model):
