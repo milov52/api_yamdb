@@ -1,61 +1,43 @@
+import os
 from csv import DictReader
+
 from django.core.management import BaseCommand
-import csv
-# Import the model
-from reviews.models import Categories, Genres, Titles, GenreTitles, User
+
+from api_yamdb.settings import BASE_DIR
+from reviews.models import Categories, GenreTitles, Genres, Titles, User
+
+MODEL_FILE = {
+    Categories: "category.csv",
+    Genres: "genre.csv",
+    Titles: "titles.csv",
+    User: "users.csv",
+    GenreTitles: "genre_title.csv",
+}
 
 
 class Command(BaseCommand):
+    def import_data(self, Model, fileName: str):
+        print(f"Import model {Model.__name__}")
+        if Model.objects.exists():
+            Model.objects.all().delete()
+
+        path = os.path.join(BASE_DIR, "static/data", fileName)
+        reader = list(DictReader(open(path)))
+
+        for dct in map(dict, reader):
+            if Model.__name__ == "Titles":
+                category = Categories.objects.get(id=dct.pop("category"))
+                Model.objects.create(**dct, category=category)
+
+            elif Model.__name__ == "GenreTitles":
+                title = Titles.objects.get(id=dct.pop("title_id"))
+                genre = Genres.objects.get(id=dct.pop("genre_id"))
+                Model.objects.create(**dct, title=title, genre=genre)
+
+            else:
+                Model.objects.create(**dct)
+        print(f"Import model {Model.__name__} done")
+
     def handle(self, *args, **options):
-
-        if Categories.objects.exists():
-            Categories.objects.all().delete()
-
-        print("Import Categories")
-        for row in DictReader(open('./static/data/category.csv', encoding='utf-8')):
-            category = Categories(id=row['id'], name=row['name'], slug=row['slug'])
-            category.save()
-        print("Import Categories done")
-
-        if Genres.objects.exists():
-            Genres.objects.all().delete()
-
-        print("Import Genres")
-        for row in DictReader(open('./static/data/genre.csv', encoding='utf-8')):
-            genre = Genres(id=row['id'], name=row['name'], slug=row['slug'])
-            genre.save()
-        print("Import Genres done")
-
-        if Titles.objects.exists():
-            Titles.objects.all().delete()
-
-        print("Import Titles")
-        for row in DictReader(open('./static/data/titles.csv', encoding='utf-8')):
-            category = Categories.objects.get(id=row['category'])
-            title = Titles(id=row['id'], name=row['name'], year=row['year'], category=category)
-            title.save()
-        print("Import Titles done")
-
-        if GenreTitles.objects.exists():
-            GenreTitles.objects.all().delete()
-
-        print("Import Genre_Title")
-        for row in DictReader(open('./static/data/genre_title.csv', encoding='utf-8')):
-            title = Titles.objects.get(id=row['title_id'])
-            genre = Genres.objects.get(id=row['genre_id'])
-            genretitle = GenreTitles(id=row['id'], title=title, genre=genre)
-            genretitle.save()
-        print("Import Genre_Title done")
-
-        for row in DictReader(open("./static/data/users.csv", encoding='utf-8')):
-            user = User(
-                id=row["id"],
-                username=row["username"],
-                email=row["email"],
-                role=row["role"],
-                bio=row['bio'],
-                first_name=row['first_name'],
-                last_name=row['last_name']
-            )
-            user.save()
-
+        for model, filename in MODEL_FILE.items():
+            self.import_data(model, filename)
