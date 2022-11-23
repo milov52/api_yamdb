@@ -3,7 +3,7 @@ from datetime import datetime
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from reviews.models import Categories, Genres, Titles, User
+from reviews.models import Categories, Genres, Titles, User, Rewiews, Comments
 
 
 class CategoriesSerializer(serializers.ModelSerializer):
@@ -75,6 +75,32 @@ class UserEmailSerializer(serializers.Serializer):
         if value == "me":
             raise serializers.ValidationError("Нельзя использовать данный username")
         return value
+
+
+class RewiewsSerializer(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field='username',
+        default=serializers.CurrentUserDefault()
+    )
+
+    class Meta:
+        model = Rewiews
+        fields = ('id', 'author', 'title', 'text', 'score', 'pub_date')
+        read_only_fields = ('title',)
+
+
+class CommentsSerializer(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field='username',
+        default=serializers.CurrentUserDefault()
+    )
+
+    class Meta:
+        model = Comments
+        fields = ('id', 'author', 'rewiew', 'text', 'pub_date')
+        read_only_fields = ('rewiew',)
 
 
 class JWTTokenSerializer(serializers.Serializer):
