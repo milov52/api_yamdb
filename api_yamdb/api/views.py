@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from api.filters import TitleFilter
 from api.serializers import (
     CategoriesSerializer,
     GenresSerializer,
@@ -52,14 +53,16 @@ class GenresViewSet(
 
 class TitlesViewSet(viewsets.ModelViewSet):
     queryset = Titles.objects.all()
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ("category", "genre", "name", "year")
+    filterset_class = TitleFilter
     permission_classes = (IsAdministratorOrReadOnly,)
 
     def get_serializer_class(self):
-        if self.action == "list":
-            return TitlesListSerializer
-        return TitlesSerializer
+        if self.request.method in ('POST', 'PATCH',):
+            return TitlesSerializer
+        return TitlesListSerializer
+
+    # def get_queryset(self):
+    #     return Titles.objects.all().annotate(rating=Avg('reviews__score'))
 
 
 class UsersViewSet(viewsets.ModelViewSet):
@@ -83,11 +86,14 @@ class UserInfo(APIView):
     def patch(self, request):
         user = User.objects.get(username=request.user.username,
                                 email=request.user.email)
+
         serializer = UserSerializer(user, data=request.data, partial=True)
+
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(role=user.role)
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class SignUp(APIView):
     def post(self, request):

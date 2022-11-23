@@ -3,7 +3,7 @@ from datetime import datetime
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from reviews.models import Categories, GenreTitles, Genres, Titles, User
+from reviews.models import Categories, Genres, Titles, User
 
 
 class CategoriesSerializer(serializers.ModelSerializer):
@@ -36,7 +36,6 @@ class TitlesSerializer(serializers.ModelSerializer):
     genre = serializers.SlugRelatedField(
         many=True, slug_field="slug", queryset=Genres.objects.all()
     )
-    description = serializers.StringRelatedField(required=False)
 
     class Meta:
         model = Titles
@@ -49,26 +48,6 @@ class TitlesSerializer(serializers.ModelSerializer):
                 "Проверьте год создания произведения (не может быть больше текущего)."
             )
         return value
-
-    def create(self, validated_data):
-        genres = validated_data.pop("genre")
-        title = Titles.objects.create(**validated_data)
-        for genre in genres:
-            GenreTitles.objects.create(genre=genre, title=title)
-        return title
-
-    def update(self, instance, validated_data):
-        instance.name = validated_data.get("name", instance.name)
-        instance.year = validated_data.get("year", instance.year)
-        instance.rating = validated_data.get("rating", instance.rating)
-        instance.description = validated_data.get("description", instance.description)
-        instance.category = validated_data.get("category", instance.category)
-
-        genres_data = validated_data.pop("genre")
-        instance.genre.set(genres_data)
-
-        instance.save()
-        return instance
 
 
 class UserSerializer(serializers.ModelSerializer):
