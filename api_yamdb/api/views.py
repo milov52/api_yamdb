@@ -2,6 +2,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.generics import get_object_or_404
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
@@ -66,6 +67,24 @@ class UsersViewSet(viewsets.ModelViewSet):
     lookup_field = "username"
     permission_classes = (IsAdministrator,)
 
+
+class UserInfo(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        queryset = User.objects.get(username=request.user.username,
+                                    email=request.user.email)
+        serializer = UserSerializer(queryset)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def patch(self, request):
+        user = User.objects.get(username=request.user.username,
+                                email=request.user.email)
+        serializer = UserSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class SignUp(APIView):
     def post(self, request):
