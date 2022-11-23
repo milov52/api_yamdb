@@ -19,7 +19,7 @@ from api.serializers import (
 )
 from api_yamdb.settings import ADMIN_EMAIL
 from reviews.models import Categories, Genres, Titles, User
-from reviews.permissions import IsAdministrator
+from reviews.permissions import IsAdministrator, IsAdministratorOrReadOnly
 
 
 class CategoriesViewSet(
@@ -33,6 +33,7 @@ class CategoriesViewSet(
     filter_backends = (filters.SearchFilter,)
     search_fields = ("name",)
     lookup_field = "slug"
+    permission_classes = (IsAdministratorOrReadOnly,)
 
 
 class GenresViewSet(
@@ -46,12 +47,14 @@ class GenresViewSet(
     filter_backends = (filters.SearchFilter,)
     search_fields = ("name",)
     lookup_field = "slug"
+    permission_classes = (IsAdministratorOrReadOnly,)
 
 
 class TitlesViewSet(viewsets.ModelViewSet):
     queryset = Titles.objects.all()
     filter_backends = (filters.SearchFilter,)
     search_fields = ("category", "genre", "name", "year")
+    permission_classes = (IsAdministratorOrReadOnly,)
 
     def get_serializer_class(self):
         if self.action == "list":
