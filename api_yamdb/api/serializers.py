@@ -1,9 +1,9 @@
 from datetime import datetime
 
-from rest_framework import serializers
+from rest_framework import serializers, exceptions
 from rest_framework.validators import UniqueValidator
 
-from reviews.models import Categories, Genres, Titles, User, Rewiews, Comments
+from reviews.models import Categories, Genres, Titles, User, Reviews, Comments
 
 
 class CategoriesSerializer(serializers.ModelSerializer):
@@ -77,7 +77,7 @@ class UserEmailSerializer(serializers.Serializer):
         return value
 
 
-class RewiewsSerializer(serializers.ModelSerializer):
+class ReviewsSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
         read_only=True,
         slug_field='username',
@@ -85,9 +85,16 @@ class RewiewsSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        model = Rewiews
+        model = Reviews
         fields = ('id', 'author', 'title', 'text', 'score', 'pub_date')
         read_only_fields = ('title',)
+    
+    def validate_author(self, data):
+        if Reviews.objects.filter(author=data).exists:
+            raise exceptions.ValidationError(
+                'Отзыв от такого пользователя уже существует'
+            )
+        return data
 
 
 class CommentsSerializer(serializers.ModelSerializer):
@@ -99,8 +106,8 @@ class CommentsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comments
-        fields = ('id', 'author', 'rewiew', 'text', 'pub_date')
-        read_only_fields = ('rewiew',)
+        fields = ('id', 'author', 'review', 'text', 'pub_date')
+        read_only_fields = ('review',)
 
 
 class JWTTokenSerializer(serializers.Serializer):

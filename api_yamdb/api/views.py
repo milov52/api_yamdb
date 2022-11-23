@@ -1,5 +1,6 @@
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
+from django.db.models import Avg
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
@@ -17,12 +18,12 @@ from api.serializers import (
     TitlesSerializer,
     UserEmailSerializer,
     UserSerializer,
-    RewiewsSerializer,
+    ReviewsSerializer,
     CommentsSerializer
 )
 from api_yamdb.settings import ADMIN_EMAIL
-from reviews.models import Categories, Genres, Titles, User, Rewiews
-from reviews.permissions import IsAdministrator, IsAdministratorOrReadOnly, ReadOnly
+from reviews.models import Categories, Genres, Titles, User, Reviews
+from .permissions import IsAdministrator, IsAdministratorOrReadOnly, ReadOnly, IsAdminOrAuthor
 
 
 class CategoriesViewSet(
@@ -115,12 +116,9 @@ class SignUp(APIView):
         return Response(serializer.data)
 
 
-from .permissions import IsAuthorOrReadOnly, ReadOnly
-
-
-class RewiewsViewSet(viewsets.ModelViewSet):
-    serializer_class = RewiewsSerializer
-    permission_classes = (IsAuthorOrReadOnly,)
+class ReviewsViewSet(viewsets.ModelViewSet):
+    serializer_class = ReviewsSerializer
+    permission_classes = (IsAdminOrAuthor,)
     
     def get_permissions(self):
         if self.action ==' retrieve':
@@ -129,16 +127,18 @@ class RewiewsViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         title = get_object_or_404(Titles, id=self.kwargs['title_id'])
-        return title.rewiews.all()
+        return title.reviews.all()
 
     def preform_create(self, serializer):
         title = get_object_or_404(Titles, id=self.kwargs['title_id'])
         serializer.save(title=title, author=self.request.user)
+        avg_scores = Reviews.objects.aggregate(Avg('score'))
+        title.update(rating=avg_scores)
 
 
 class CommentsViewSet(viewsets.ModelViewSet):
     serializer_class = CommentsSerializer
-    permissions_classes = (IsAuthorOrReadOnly)
+    permissions_classes = (IsAdminOrAuthor,)
     
     def get_permissions(self):
         if self.action == 'retrieve':
@@ -146,12 +146,12 @@ class CommentsViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
     
     def get_queryset(self):
-        rewiew = get_object_or_404(Rewiews, id=self.kwargs['rewiew_id'])
-        return rewiew.comments.all()
+        review = get_object_or_404(Reviews, id=self.kwargs['review_id'])
+        return review.comments.all()
     
     def preform_create(self, serializer):
-        rewiew = get_object_or_404(Rewiews, id=self.kwargs['rewiew_id'])
-        serializer.save(rewiew=rewiew, author=self.request.user)
+        review = get_object_or_404(Reviews, id=self.kwargs['review_id'])
+        serializer.save(review=review, author=self.request.user)
 
 
 class JWTTokenViewSet(APIView):

@@ -46,13 +46,13 @@ class Titles(models.Model):
     def __str__(self):
         return self.name
 
-class Rewiews(models.Model):
+class Reviews(models.Model):
     title = models.ForeignKey(
         Titles,
         null=True,
         blank=True,
         on_delete=models.CASCADE,
-        related_name='rewiews',
+        related_name='reviews',
         verbose_name='отзыв к произведению'
     )
     text = models.TextField(
@@ -62,11 +62,11 @@ class Rewiews(models.Model):
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='rewiews',
-        verbose_name='автор отзыва'
+        related_name='reviews',
+        verbose_name='автор отзыва',
     )
     score = models.PositiveIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(100)]
+        validators=[MinValueValidator(1), MaxValueValidator(10)]
         )
     pub_date = models.DateTimeField(
         auto_now=True,
@@ -79,8 +79,8 @@ class Rewiews(models.Model):
         verbose_name_plural = 'Отзывы'
 
 class Comments(models.Model):
-    rewiew = models.ForeignKey(
-        Rewiews,
+    review = models.ForeignKey(
+        Reviews,
         null=True,
         blank=True,
         on_delete=models.CASCADE,
