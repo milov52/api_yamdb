@@ -10,12 +10,20 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from api.filters import TitleFilter
-from api.serializers import (CategoriesSerializer, CommentsSerializer, GenresSerializer, JWTTokenSerializer,
-                             ReviewsSerializer, TitlesListSerializer, TitlesSerializer, UserEmailSerializer,
-                             UserSerializer)
+from api.serializers import (
+    CategoriesSerializer,
+    CommentsSerializer,
+    GenresSerializer,
+    JWTTokenSerializer,
+    ReviewsSerializer,
+    TitlesListSerializer,
+    TitlesSerializer,
+    UserEmailSerializer,
+    UserSerializer,
+)
 from api_yamdb.settings import ADMIN_EMAIL
-from reviews.models import Categories, Genres, Reviews, Titles, User
-from .permissions import IsAdministrator, IsAdministratorOrReadOnly, IsOwnerOrModerator, ReadOnly
+from reviews.models import Category, Genre, Review, Title, User
+from .permissions import IsAdmin, IsAuthorOrReadOnly, IsModerator, ReadOnly
 
 
 class CategoriesViewSet(
@@ -25,11 +33,11 @@ class CategoriesViewSet(
     GenericViewSet,
 ):
     serializer_class = CategoriesSerializer
-    queryset = Categories.objects.all()
+    queryset = Category.objects.all()
     filter_backends = (filters.SearchFilter,)
     search_fields = ("name",)
     lookup_field = "slug"
-    permission_classes = (IsAdministratorOrReadOnly,)
+    permission_classes = (IsAdmin | ReadOnly,)
 
 
 class GenresViewSet(
@@ -39,25 +47,25 @@ class GenresViewSet(
     GenericViewSet,
 ):
     serializer_class = GenresSerializer
-    queryset = Genres.objects.all()
+    queryset = Genre.objects.all()
     filter_backends = (filters.SearchFilter,)
     search_fields = ("name",)
     lookup_field = "slug"
-    permission_classes = (IsAdministratorOrReadOnly,)
+    permission_classes = (IsAdmin | ReadOnly,)
 
 
 class TitlesViewSet(viewsets.ModelViewSet):
-    queryset = Titles.objects.all()
+    queryset = Title.objects.all().annotate(rating=Avg("reviews__score"))
     filterset_class = TitleFilter
-    permission_classes = (IsAdministratorOrReadOnly,)
+    permission_classes = (IsAdmin | ReadOnly,)
 
     def get_serializer_class(self):
-        if self.request.method in ('POST', 'PATCH',):
+        if self.request.method in (
+            "POST",
+            "PATCH",
+        ):
             return TitlesSerializer
         return TitlesListSerializer
-
-    # def get_queryset(self):
-    #     return Titles.objects.all().annotate(rating=Avg('reviews__score'))
 
 
 class UsersViewSet(viewsets.ModelViewSet):
@@ -66,21 +74,23 @@ class UsersViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.SearchFilter,)
     search_fields = ("username",)
     lookup_field = "username"
-    permission_classes = (IsAdministrator,)
+    permission_classes = (IsAdmin,)
 
 
 class UserInfo(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        queryset = User.objects.get(username=request.user.username,
-                                    email=request.user.email)
+        queryset = User.objects.get(
+            username=request.user.username, email=request.user.email
+        )
         serializer = UserSerializer(queryset)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def patch(self, request):
-        user = User.objects.get(username=request.user.username,
-                                email=request.user.email)
+        user = User.objects.get(
+            username=request.user.username, email=request.user.email
+        )
 
         serializer = UserSerializer(user, data=request.data, partial=True)
 
@@ -110,45 +120,29 @@ class SignUp(APIView):
 
 class ReviewsViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewsSerializer
-    permission_classes = (IsAdministrator and IsOwnerOrModerator,)
-
-    def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
-            return (ReadOnly(),)
-        elif self.action == 'create':
-            return (IsAuthenticated(),)
-        return super().get_permissions()
+    permission_classes = (IsAdmin | IsModerator | IsAuthorOrReadOnly,)
 
     def get_queryset(self):
-        title = get_object_or_404(Titles, id=self.kwargs['title_id'])
+        title = get_object_or_404(Title, id=self.kwargs["title_id"])
         return title.reviews.all()
 
+    #
     def perform_create(self, serializer):
-        title = get_object_or_404(Titles, id=self.kwargs['title_id'])
+        title = get_object_or_404(Title, id=self.kwargs["title_id"])
         serializer.save(title=title, author=self.request.user)
-        avg_score = Reviews.objects.aggregate(Avg('score'))['score__avg']
-        title.rating = avg_score
-        title.save()
 
 
 class CommentsViewSet(viewsets.ModelViewSet):
     serializer_class = CommentsSerializer
 
-    permission_classes = (IsAdministrator and IsOwnerOrModerator,)
-
-    def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
-            return (ReadOnly(),)
-        elif self.action == 'create':
-            return (IsAuthenticated(),)
-        return super().get_permissions()
+    permission_classes = (IsAdmin | IsModerator | IsAuthorOrReadOnly,)
 
     def get_queryset(self):
-        review = get_object_or_404(Reviews, id=self.kwargs['review_id'])
+        review = get_object_or_404(Review, id=self.kwargs["review_id"])
         return review.comments.all()
 
     def perform_create(self, serializer):
-        review = get_object_or_404(Reviews, id=self.kwargs['review_id'])
+        review = get_object_or_404(Review, id=self.kwargs["review_id"])
         serializer.save(review=review, author=self.request.user)
 
 

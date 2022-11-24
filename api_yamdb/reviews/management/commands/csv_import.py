@@ -4,24 +4,16 @@ from csv import DictReader
 from django.core.management import BaseCommand
 
 from api_yamdb.settings import BASE_DIR
-from reviews.models import (
-    Categories,
-    Comments,
-    GenreTitles,
-    Genres,
-    Reviews,
-    Titles,
-    User,
-)
+from reviews.models import (Category, Comment, Genre, GenreTitles, Review, Title, User)
 
 MODEL_FILE = {
-    Categories: "category.csv",
-    Genres: "genre.csv",
-    Titles: "titles.csv",
+    Category: "category.csv",
+    Genre: "genre.csv",
+    Title: "titles.csv",
     User: "users.csv",
     GenreTitles: "genre_title.csv",
-    Reviews: "review.csv",
-    Comments: "comments.csv",
+    Review: "review.csv",
+    Comment: "comments.csv",
 }
 
 
@@ -35,22 +27,22 @@ class Command(BaseCommand):
         reader = list(DictReader(open(path, encoding="utf8")))
 
         for dct in map(dict, reader):
-            if Model.__name__ == "Titles":
-                category = Categories.objects.get(id=dct.pop("category"))
+            if Model.__name__ == "Title":
+                category = Category.objects.get(id=dct.pop("category"))
                 Model.objects.create(**dct, category=category)
 
             elif Model.__name__ == "GenreTitles":
-                title = Titles.objects.get(id=dct.pop("title_id"))
-                genre = Genres.objects.get(id=dct.pop("genre_id"))
+                title = Title.objects.get(id=dct.pop("title_id"))
+                genre = Genre.objects.get(id=dct.pop("genre_id"))
                 Model.objects.create(**dct, title=title, genre=genre)
 
-            elif Model.__name__ == "Reviews":
-                title = Titles.objects.get(id=dct.pop("title_id"))
+            elif Model.__name__ == "Review":
+                title = Title.objects.get(id=dct.pop("title_id"))
                 author = User.objects.get(id=dct.pop("author"))
                 Model.objects.create(**dct, title=title, author=author)
 
-            elif Model.__name__ == "Comments":
-                review = Reviews.objects.get(id=dct.pop("review_id"))
+            elif Model.__name__ == "Comment":
+                review = Review.objects.get(id=dct.pop("review_id"))
                 author = User.objects.get(id=dct.pop("author"))
                 Model.objects.create(**dct, review=review, author=author)
             else:

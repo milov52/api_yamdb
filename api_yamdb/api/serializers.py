@@ -1,21 +1,21 @@
 from datetime import datetime
 
-from rest_framework import serializers, exceptions
+from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from reviews.models import Categories, Genres, Titles, User, Reviews, Comments
+from reviews.models import Category, Comment, Genre, Review, Title, User
 
 
 class CategoriesSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Categories
+        model = Category
         fields = ("name", "slug")
         lookup_field = "slug"
 
 
 class GenresSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Genres
+        model = Genre
         fields = ("name", "slug")
         lookup_field = "slug"
 
@@ -23,23 +23,24 @@ class GenresSerializer(serializers.ModelSerializer):
 class TitlesListSerializer(serializers.ModelSerializer):
     category = CategoriesSerializer()
     genre = GenresSerializer(many=True)
+    rating = serializers.FloatField()
 
     class Meta:
-        model = Titles
+        model = Title
         fields = ("id", "name", "year", "rating", "description", "genre", "category")
 
 
 class TitlesSerializer(serializers.ModelSerializer):
     category = serializers.SlugRelatedField(
-        slug_field="slug", queryset=Categories.objects.all()
+        slug_field="slug", queryset=Category.objects.all()
     )
     genre = serializers.SlugRelatedField(
-        many=True, slug_field="slug", queryset=Genres.objects.all()
+        many=True, slug_field="slug", queryset=Genre.objects.all()
     )
 
     class Meta:
-        model = Titles
-        fields = ("id", "name", "year", "rating", "description", "genre", "category")
+        model = Title
+        fields = ("id", "name", "year", "description", "genre", "category")
 
     def validate_year(self, value):
         current_year = datetime.now().year
@@ -79,35 +80,36 @@ class UserEmailSerializer(serializers.Serializer):
 
 class ReviewsSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
-        read_only=True,
-        slug_field='username',
-        default=serializers.CurrentUserDefault()
+        read_only=True, slug_field="username", default=serializers.CurrentUserDefault()
     )
 
     class Meta:
-        model = Reviews
-        fields = ('id', 'author', 'title', 'text', 'score', 'pub_date')
-        read_only_fields = ('title',)
+        model = Review
+        fields = ("id", "author", "title", "text", "score", "pub_date")
+        read_only_fields = ("title",)
 
-    def validate_author(self, data):
-        if Reviews.objects.filter(author=data).exists():
-            raise exceptions.ValidationError(
-                'Отзыв от такого пользователя уже существует'
-            )
+    def validate(self, data):
+        if self.context["request"].method == "PATCH":
+            return data
+
+        title_id = self.context["view"].kwargs.get("title_id")
+        user = self.context["request"].user
+
+        is_review_exists = Review.objects.filter(title=title_id, author=user).exists()
+        if is_review_exists:
+            raise serializers.ValidationError("Вы уже оставили отзыв.")
         return data
 
 
 class CommentsSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
-        read_only=True,
-        slug_field='username',
-        default=serializers.CurrentUserDefault()
+        read_only=True, slug_field="username", default=serializers.CurrentUserDefault()
     )
 
     class Meta:
-        model = Comments
-        fields = ('id', 'author', 'review', 'text', 'pub_date')
-        read_only_fields = ('review',)
+        model = Comment
+        fields = ("id", "author", "review", "text", "pub_date")
+        read_only_fields = ("review",)
 
 
 class JWTTokenSerializer(serializers.Serializer):

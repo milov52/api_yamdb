@@ -17,7 +17,7 @@ class User(AbstractUser):
     )
 
 
-class Categories(models.Model):
+class Category(models.Model):
     name = models.CharField(max_length=256)
     slug = models.SlugField(unique=True, max_length=50)
 
@@ -25,7 +25,7 @@ class Categories(models.Model):
         return self.name
 
 
-class Genres(models.Model):
+class Genre(models.Model):
     name = models.CharField(max_length=256)
     slug = models.SlugField(unique=True, max_length=50)
 
@@ -33,23 +33,22 @@ class Genres(models.Model):
         return self.name
 
 
-class Titles(models.Model):
+class Title(models.Model):
     name = models.CharField(max_length=255)
     year = models.IntegerField()
-    rating = models.IntegerField(blank=True, null=True)
     description = models.TextField("Описание")
     category = models.ForeignKey(
-        Categories, on_delete=models.SET_NULL, related_name="title", null=True
+        Category, on_delete=models.SET_NULL, related_name="title", null=True
     )
-    genre = models.ManyToManyField(Genres, through="GenreTitles")
+    genre = models.ManyToManyField(Genre, through="GenreTitles")
 
     def __str__(self):
         return self.name
 
 
-class Reviews(models.Model):
+class Review(models.Model):
     title = models.ForeignKey(
-        Titles,
+        Title,
         null=True,
         blank=True,
         on_delete=models.CASCADE,
@@ -67,22 +66,28 @@ class Reviews(models.Model):
         verbose_name='автор отзыва'
     )
     score = models.PositiveIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(100)]
+        validators=[MinValueValidator(1), MaxValueValidator(10)]
     )
     pub_date = models.DateTimeField(
         auto_now=True,
         verbose_name='Дата отзыва'
     )
 
+
     class Meta:
         ordering = ('-pub_date',)
         verbose_name = 'Отзыв'
         verbose_name_plural = 'Отзывы'
 
+        constraints = [
+            models.UniqueConstraint(
+                fields=['author', 'title'],
+                name='unique review')
+        ]
 
-class Comments(models.Model):
+class Comment(models.Model):
     review = models.ForeignKey(
-        Reviews,
+        Review,
         null=True,
         blank=True,
         on_delete=models.CASCADE,
@@ -112,14 +117,14 @@ class Comments(models.Model):
 
 class GenreTitles(models.Model):
     title = models.ForeignKey(
-        Titles,
+        Title,
         on_delete=models.SET_NULL,
         null=True,
         verbose_name="Наименование",
         related_name="title",
     )
     genre = models.ForeignKey(
-        Genres,
+        Genre,
         on_delete=models.SET_NULL,
         null=True,
         verbose_name="Жанр",
