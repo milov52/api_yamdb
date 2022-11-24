@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.db.models import Avg
 
 from api.filters import TitleFilter
 from api.serializers import (CategoriesSerializer, CommentsSerializer, GenresSerializer, JWTTokenSerializer,
@@ -14,7 +15,7 @@ from api.serializers import (CategoriesSerializer, CommentsSerializer, GenresSer
                              UserSerializer)
 from api_yamdb.settings import ADMIN_EMAIL
 from reviews.models import Categories, Genres, Reviews, Titles, User
-from .permissions import IsAdministrator, IsAdministratorOrReadOnly, IsAuthorOrReadOnly, ReadOnly
+from .permissions import IsAdministrator, IsAdministratorOrReadOnly, IsAuthorOrReadOnly, ReadOnly, IsAdminOrAuthor
 
 
 class CategoriesViewSet(
@@ -109,7 +110,7 @@ class SignUp(APIView):
 
 class ReviewsViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewsSerializer
-    permission_classes = (IsAuthorOrReadOnly,)
+    permission_classes = (IsAdminOrAuthor,)
 
     def get_permissions(self):
         if self.action == 'retrieve':
@@ -123,11 +124,14 @@ class ReviewsViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         title = get_object_or_404(Titles, id=self.kwargs['title_id'])
         serializer.save(title=title, author=self.request.user)
+        avg_score = Reviews.objects.aggregate(Avg('score'))['score__avg']
+        title.rating = avg_score
+        title.save()
 
 
 class CommentsViewSet(viewsets.ModelViewSet):
     serializer_class = CommentsSerializer
-    permissions_classes = (IsAuthorOrReadOnly)
+    permissions_classes = (IsAdminOrAuthor)
 
     def get_permissions(self):
         if self.action == 'retrieve':
@@ -140,7 +144,7 @@ class CommentsViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         review = get_object_or_404(Reviews, id=self.kwargs['review_id'])
-        serializer.save(rewiew=review, author=self.request.user)
+        serializer.save(review=review, author=self.request.user)
 
 
 class JWTTokenViewSet(APIView):

@@ -32,7 +32,7 @@ class Command(BaseCommand):
             Model.objects.all().delete()
 
         path = os.path.join(BASE_DIR, "static/data", fileName)
-        reader = list(DictReader(open(path)))
+        reader = list(DictReader(open(path, encoding="utf8")))
 
         for dct in map(dict, reader):
             if Model.__name__ == "Titles":

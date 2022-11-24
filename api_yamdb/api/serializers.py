@@ -88,9 +88,9 @@ class ReviewsSerializer(serializers.ModelSerializer):
         model = Reviews
         fields = ('id', 'author', 'title', 'text', 'score', 'pub_date')
         read_only_fields = ('title',)
-    
+
     def validate_author(self, data):
-        if Reviews.objects.filter(author=data).exists:
+        if Reviews.objects.filter(author=data).exists():
             raise exceptions.ValidationError(
                 'Отзыв от такого пользователя уже существует'
             )
