@@ -21,4 +21,5 @@ class TitlesAdmin(admin.ModelAdmin):
     list_filter = ("category", "year")
     search_fields = ("name",)
 
+
 admin.site.register(User)

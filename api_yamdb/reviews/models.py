@@ -10,7 +10,9 @@ class User(AbstractUser):
         ('admin', 'Admin')
     )
 
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='user')
+    role = models.CharField(
+        max_length=10, choices=ROLE_CHOICES, default='user'
+    )
     bio = models.TextField(
         'Биография',
         blank=True,
@@ -73,7 +75,6 @@ class Review(models.Model):
         verbose_name='Дата отзыва'
     )
 
-
     class Meta:
         ordering = ('-pub_date',)
         verbose_name = 'Отзыв'
@@ -84,6 +85,7 @@ class Review(models.Model):
                 fields=['author', 'title'],
                 name='unique review')
         ]
+
 
 class Comment(models.Model):
     review = models.ForeignKey(
@@ -133,5 +135,7 @@ class GenreTitles(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=["title", "genre"], name="unique_genres")
+            models.UniqueConstraint(
+                fields=["title", "genre"], name="unique_genres"
+            )
         ]

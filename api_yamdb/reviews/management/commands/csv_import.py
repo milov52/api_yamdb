@@ -4,7 +4,9 @@ from csv import DictReader
 from django.core.management import BaseCommand
 
 from api_yamdb.settings import BASE_DIR
-from reviews.models import (Category, Comment, Genre, GenreTitles, Review, Title, User)
+from reviews.models import (
+    Category, Comment, Genre, GenreTitles, Review, Title, User
+)
 
 MODEL_FILE = {
     Category: "category.csv",

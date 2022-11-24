@@ -151,10 +151,14 @@ class JWTTokenViewSet(APIView):
         serializer = JWTTokenSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        current_user = get_object_or_404(User, username=serializer.data["username"])
+        current_user = get_object_or_404(
+            User, username=serializer.data["username"]
+        )
         confirmation_code = default_token_generator.make_token(current_user)
         if confirmation_code != serializer.data["confirmation_code"]:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                serializer.errors, status=status.HTTP_400_BAD_REQUEST
+            )
 
         refresh = RefreshToken.for_user(current_user)
         return Response({"token": str(refresh.access_token)})

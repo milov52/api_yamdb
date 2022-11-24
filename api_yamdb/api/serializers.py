@@ -27,7 +27,9 @@ class TitlesListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Title
-        fields = ("id", "name", "year", "rating", "description", "genre", "category")
+        fields = (
+            "id", "name", "year", "rating", "description", "genre", "category"
+        )
 
 
 class TitlesSerializer(serializers.ModelSerializer):
@@ -46,41 +48,52 @@ class TitlesSerializer(serializers.ModelSerializer):
         current_year = datetime.now().year
         if not 0 <= value <= current_year:
             raise serializers.ValidationError(
-                "Проверьте год создания произведения (не может быть больше текущего)."
+                "Проверьте год создания произведения"
+                "(не может быть больше текущего)."
             )
         return value
 
 
 class UserSerializer(serializers.ModelSerializer):
     username = serializers.SlugField(
-        required=True, validators=[UniqueValidator(queryset=User.objects.all())]
+        required=True,
+        validators=[UniqueValidator(queryset=User.objects.all())]
     )
     email = serializers.EmailField(
-        required=True, validators=[UniqueValidator(queryset=User.objects.all())]
+        required=True,
+        validators=[UniqueValidator(queryset=User.objects.all())]
     )
 
     class Meta:
         model = User
-        fields = ("username", "email", "first_name", "last_name", "bio", "role")
+        fields = (
+            "username", "email", "first_name", "last_name", "bio", "role"
+        )
 
 
 class UserEmailSerializer(serializers.Serializer):
     username = serializers.SlugField(
-        required=True, validators=[UniqueValidator(queryset=User.objects.all())]
+        required=True,
+        validators=[UniqueValidator(queryset=User.objects.all())]
     )
     email = serializers.EmailField(
-        required=True, validators=[UniqueValidator(queryset=User.objects.all())]
+        required=True,
+        validators=[UniqueValidator(queryset=User.objects.all())]
     )
 
     def validate_username(self, value):
         if value == "me":
-            raise serializers.ValidationError("Нельзя использовать данный username")
+            raise serializers.ValidationError(
+                "Нельзя использовать данный username"
+            )
         return value
 
 
 class ReviewsSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
-        read_only=True, slug_field="username", default=serializers.CurrentUserDefault()
+        read_only=True,
+        slug_field="username",
+        default=serializers.CurrentUserDefault()
     )
 
     class Meta:
@@ -95,7 +108,9 @@ class ReviewsSerializer(serializers.ModelSerializer):
         title_id = self.context["view"].kwargs.get("title_id")
         user = self.context["request"].user
 
-        is_review_exists = Review.objects.filter(title=title_id, author=user).exists()
+        is_review_exists = Review.objects.filter(
+            title=title_id, author=user
+        ).exists()
         if is_review_exists:
             raise serializers.ValidationError("Вы уже оставили отзыв.")
         return data
@@ -103,7 +118,9 @@ class ReviewsSerializer(serializers.ModelSerializer):
 
 class CommentsSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
-        read_only=True, slug_field="username", default=serializers.CurrentUserDefault()
+        read_only=True,
+        slug_field="username",
+        default=serializers.CurrentUserDefault()
     )
 
     class Meta:
