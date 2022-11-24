@@ -1,5 +1,6 @@
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
+from django.db.models import Avg
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
@@ -7,7 +8,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.db.models import Avg
 
 from api.filters import TitleFilter
 from api.serializers import (CategoriesSerializer, CommentsSerializer, GenresSerializer, JWTTokenSerializer,
@@ -15,7 +15,7 @@ from api.serializers import (CategoriesSerializer, CommentsSerializer, GenresSer
                              UserSerializer)
 from api_yamdb.settings import ADMIN_EMAIL
 from reviews.models import Categories, Genres, Reviews, Titles, User
-from .permissions import IsAdministrator, IsAdministratorOrReadOnly, IsAuthorOrReadOnly, ReadOnly, IsAdminOrAuthor
+from .permissions import IsAdministrator, IsAdministratorOrReadOnly, IsOwnerOrModerator, ReadOnly
 
 
 class CategoriesViewSet(
@@ -110,11 +110,13 @@ class SignUp(APIView):
 
 class ReviewsViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewsSerializer
-    permission_classes = (IsAdminOrAuthor,)
+    permission_classes = (IsAdministrator and IsOwnerOrModerator,)
 
     def get_permissions(self):
-        if self.action == 'retrieve':
+        if self.action in ['list', 'retrieve']:
             return (ReadOnly(),)
+        elif self.action == 'create':
+            return (IsAuthenticated(),)
         return super().get_permissions()
 
     def get_queryset(self):
@@ -131,11 +133,14 @@ class ReviewsViewSet(viewsets.ModelViewSet):
 
 class CommentsViewSet(viewsets.ModelViewSet):
     serializer_class = CommentsSerializer
-    permissions_classes = (IsAdminOrAuthor)
+
+    permission_classes = (IsAdministrator and IsOwnerOrModerator,)
 
     def get_permissions(self):
-        if self.action == 'retrieve':
+        if self.action in ['list', 'retrieve']:
             return (ReadOnly(),)
+        elif self.action == 'create':
+            return (IsAuthenticated(),)
         return super().get_permissions()
 
     def get_queryset(self):
