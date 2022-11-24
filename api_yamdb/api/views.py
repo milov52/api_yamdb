@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
-import jwt
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from api.filters import TitleFilter
 from api.serializers import (
@@ -100,24 +100,6 @@ class UserInfo(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class SignUp(APIView):
-    def post(self, request):
-        serializer = UserEmailSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        current_user, created = User.objects.get_or_create(**serializer.data)
-        key = "secret"
-        encoded = jwt.encode({current_user.username: "payload"}, key, algorithm="HS256")
-
-        subject = "Confirmation code from YaMDb"
-        message = f"{encoded} - ваш код для авторизации на YaMDb"
-        admin_email = ADMIN_EMAIL
-        user_email = [current_user.email]
-        send_mail(subject, message, admin_email, user_email)
-
-        return Response(serializer.data)
-
-
 class ReviewsViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewsSerializer
     permission_classes = (IsAdmin | IsModerator | IsAuthorOrReadOnly,)
@@ -144,6 +126,23 @@ class CommentsViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         review = get_object_or_404(Review, id=self.kwargs["review_id"])
         serializer.save(review=review, author=self.request.user)
+
+
+class SignUp(APIView):
+    def post(self, request):
+        serializer = UserEmailSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        current_user, created = User.objects.get_or_create(**serializer.data)
+        encoded = default_token_generator.make_token(current_user)
+
+        subject = "Confirmation code from YaMDb"
+        message = f"{encoded} - ваш код для авторизации на YaMDb"
+        admin_email = ADMIN_EMAIL
+        user_email = [current_user.email]
+        send_mail(subject, message, admin_email, user_email)
+
+        return Response(serializer.data)
 
 
 class JWTTokenViewSet(APIView):
