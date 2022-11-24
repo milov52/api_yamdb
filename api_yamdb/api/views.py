@@ -9,20 +9,13 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from api.filters import TitleFilter
-from api.serializers import (
-    CategoriesSerializer,
-    GenresSerializer,
-    JWTTokenSerializer,
-    TitlesListSerializer,
-    TitlesSerializer,
-    UserEmailSerializer,
-    UserSerializer,
-    RewiewsSerializer,
-    CommentsSerializer
-)
+from api.serializers import (CategoriesSerializer, CommentsSerializer, GenresSerializer, JWTTokenSerializer,
+                             ReviewsSerializer, TitlesListSerializer, TitlesSerializer, UserEmailSerializer,
+                             UserSerializer)
 from api_yamdb.settings import ADMIN_EMAIL
-from reviews.models import Categories, Genres, Titles, User, Reviews
+from reviews.models import Categories, Genres, Reviews, Titles, User
 from .permissions import IsAdministrator, IsAdministratorOrReadOnly, IsAuthorOrReadOnly, ReadOnly
+
 
 class CategoriesViewSet(
     mixins.CreateModelMixin,
@@ -114,13 +107,10 @@ class SignUp(APIView):
         return Response(serializer.data)
 
 
-
-
-
-class RewiewsViewSet(viewsets.ModelViewSet):
-    serializer_class = RewiewsSerializer
+class ReviewsViewSet(viewsets.ModelViewSet):
+    serializer_class = ReviewsSerializer
     permission_classes = (IsAuthorOrReadOnly,)
-    
+
     def get_permissions(self):
         if self.action == 'retrieve':
             return (ReadOnly(),)
@@ -128,9 +118,9 @@ class RewiewsViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         title = get_object_or_404(Titles, id=self.kwargs['title_id'])
-        return title.rewiews.all()
+        return title.reviews.all()
 
-    def preform_create(self, serializer):
+    def perform_create(self, serializer):
         title = get_object_or_404(Titles, id=self.kwargs['title_id'])
         serializer.save(title=title, author=self.request.user)
 
@@ -138,19 +128,19 @@ class RewiewsViewSet(viewsets.ModelViewSet):
 class CommentsViewSet(viewsets.ModelViewSet):
     serializer_class = CommentsSerializer
     permissions_classes = (IsAuthorOrReadOnly)
-    
+
     def get_permissions(self):
         if self.action == 'retrieve':
             return (ReadOnly(),)
         return super().get_permissions()
-    
+
     def get_queryset(self):
-        rewiew = get_object_or_404(Rewiews, id=self.kwargs['rewiew_id'])
-        return rewiew.comments.all()
-    
-    def preform_create(self, serializer):
-        rewiew = get_object_or_404(Rewiews, id=self.kwargs['rewiew_id'])
-        serializer.save(rewiew=rewiew, author=self.request.user)
+        review = get_object_or_404(Reviews, id=self.kwargs['review_id'])
+        return review.comments.all()
+
+    def perform_create(self, serializer):
+        review = get_object_or_404(Reviews, id=self.kwargs['review_id'])
+        serializer.save(rewiew=review, author=self.request.user)
 
 
 class JWTTokenViewSet(APIView):
