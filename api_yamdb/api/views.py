@@ -21,9 +21,8 @@ from api.serializers import (
     CommentsSerializer
 )
 from api_yamdb.settings import ADMIN_EMAIL
-from reviews.models import Categories, Genres, Titles, User, Rewiews
-from reviews.permissions import IsAdministrator, IsAdministratorOrReadOnly, ReadOnly
-
+from reviews.models import Categories, Genres, Titles, User, Reviews
+from .permissions import IsAdministrator, IsAdministratorOrReadOnly, IsAuthorOrReadOnly, ReadOnly
 
 class CategoriesViewSet(
     mixins.CreateModelMixin,
@@ -115,7 +114,7 @@ class SignUp(APIView):
         return Response(serializer.data)
 
 
-from .permissions import IsAuthorOrReadOnly, ReadOnly
+
 
 
 class RewiewsViewSet(viewsets.ModelViewSet):
@@ -123,7 +122,7 @@ class RewiewsViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthorOrReadOnly,)
     
     def get_permissions(self):
-        if self.action ==' retrieve':
+        if self.action == 'retrieve':
             return (ReadOnly(),)
         return super().get_permissions()
 

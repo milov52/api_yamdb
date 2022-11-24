@@ -3,7 +3,7 @@ from datetime import datetime
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from reviews.models import Categories, Genres, Titles, User, Rewiews, Comments
+from reviews.models import Categories, Genres, Titles, User, Reviews, Comments
 
 
 class CategoriesSerializer(serializers.ModelSerializer):
@@ -85,7 +85,7 @@ class RewiewsSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        model = Rewiews
+        model = Reviews
         fields = ('id', 'author', 'title', 'text', 'score', 'pub_date')
         read_only_fields = ('title',)
 

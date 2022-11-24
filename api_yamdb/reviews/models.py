@@ -1,6 +1,7 @@
-from django.db import models
-from django.core.validators import MaxValueValidator, MinValueValidator
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
+
 
 class User(AbstractUser):
     ROLE_CHOICES = (
@@ -14,7 +15,6 @@ class User(AbstractUser):
         'Биография',
         blank=True,
     )
-
 
 
 class Categories(models.Model):
@@ -46,13 +46,14 @@ class Titles(models.Model):
     def __str__(self):
         return self.name
 
-class Rewiews(models.Model):
+
+class Reviews(models.Model):
     title = models.ForeignKey(
         Titles,
         null=True,
         blank=True,
         on_delete=models.CASCADE,
-        related_name='rewiews',
+        related_name='reviews',
         verbose_name='отзыв к произведению'
     )
     text = models.TextField(
@@ -62,12 +63,12 @@ class Rewiews(models.Model):
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='rewiews',
+        related_name='reviews',
         verbose_name='автор отзыва'
     )
     score = models.PositiveIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(100)]
-        )
+    )
     pub_date = models.DateTimeField(
         auto_now=True,
         verbose_name='Дата отзыва'
@@ -78,9 +79,10 @@ class Rewiews(models.Model):
         verbose_name = 'Отзыв'
         verbose_name_plural = 'Отзывы'
 
+
 class Comments(models.Model):
-    rewiew = models.ForeignKey(
-        Rewiews,
+    review = models.ForeignKey(
+        Reviews,
         null=True,
         blank=True,
         on_delete=models.CASCADE,
