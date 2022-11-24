@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
-from rest_framework_simplejwt.tokens import RefreshToken
+import jwt
 
 from api.filters import TitleFilter
 from api.serializers import (
@@ -106,11 +106,11 @@ class SignUp(APIView):
         serializer.is_valid(raise_exception=True)
 
         current_user, created = User.objects.get_or_create(**serializer.data)
-
-        confirmation_code = default_token_generator.make_token(current_user)
+        key = "secret"
+        encoded = jwt.encode({current_user.username: "payload"}, key, algorithm="HS256")
 
         subject = "Confirmation code from YaMDb"
-        message = f"{confirmation_code} - ваш код для авторизации на YaMDb"
+        message = f"{encoded} - ваш код для авторизации на YaMDb"
         admin_email = ADMIN_EMAIL
         user_email = [current_user.email]
         send_mail(subject, message, admin_email, user_email)
