@@ -3,7 +3,8 @@ from datetime import datetime
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from reviews.models import Category, Comment, Genre, Review, Title, User
+from reviews.models import Category, Comment, Genre, Review, Title
+from users.models import User
 
 
 class CategoriesSerializer(serializers.ModelSerializer):
@@ -28,7 +29,13 @@ class TitlesListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Title
         fields = (
-            "id", "name", "year", "rating", "description", "genre", "category"
+            "id",
+            "name",
+            "year",
+            "rating",
+            "description",
+            "genre",
+            "category",
         )
 
 
@@ -57,28 +64,33 @@ class TitlesSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     username = serializers.SlugField(
         required=True,
-        validators=[UniqueValidator(queryset=User.objects.all())]
+        validators=[UniqueValidator(queryset=User.objects.all())],
     )
     email = serializers.EmailField(
         required=True,
-        validators=[UniqueValidator(queryset=User.objects.all())]
+        validators=[UniqueValidator(queryset=User.objects.all())],
     )
 
     class Meta:
         model = User
         fields = (
-            "username", "email", "first_name", "last_name", "bio", "role"
+            "username",
+            "email",
+            "first_name",
+            "last_name",
+            "bio",
+            "role",
         )
 
 
 class UserEmailSerializer(serializers.Serializer):
     username = serializers.SlugField(
         required=True,
-        validators=[UniqueValidator(queryset=User.objects.all())]
+        validators=[UniqueValidator(queryset=User.objects.all())],
     )
     email = serializers.EmailField(
         required=True,
-        validators=[UniqueValidator(queryset=User.objects.all())]
+        validators=[UniqueValidator(queryset=User.objects.all())],
     )
 
     def validate_username(self, value):
@@ -93,7 +105,7 @@ class ReviewsSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
         read_only=True,
         slug_field="username",
-        default=serializers.CurrentUserDefault()
+        default=serializers.CurrentUserDefault(),
     )
 
     class Meta:
@@ -120,7 +132,7 @@ class CommentsSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
         read_only=True,
         slug_field="username",
-        default=serializers.CurrentUserDefault()
+        default=serializers.CurrentUserDefault(),
     )
 
     class Meta:

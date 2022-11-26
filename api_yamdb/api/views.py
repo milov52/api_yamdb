@@ -2,6 +2,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.db.models import Avg
 from rest_framework import filters, mixins, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -22,16 +23,19 @@ from api.serializers import (
     UserSerializer,
 )
 from api_yamdb.settings import ADMIN_EMAIL
-from reviews.models import Category, Genre, Review, Title, User
+from reviews.models import Category, Genre, Review, Title
+from users.models import User
 from .permissions import IsAdmin, IsAuthorOrReadOnly, IsModerator, ReadOnly
 
 
-class CategoriesViewSet(
-    mixins.CreateModelMixin,
-    mixins.DestroyModelMixin,
-    mixins.ListModelMixin,
-    GenericViewSet,
-):
+class CreateDeleteViewSet(mixins.CreateModelMixin,
+                          mixins.DestroyModelMixin,
+                          mixins.ListModelMixin,
+                          GenericViewSet, ):
+    pass
+
+
+class CategoriesViewSet(CreateDeleteViewSet):
     serializer_class = CategoriesSerializer
     queryset = Category.objects.all()
     filter_backends = (filters.SearchFilter,)
@@ -40,12 +44,7 @@ class CategoriesViewSet(
     permission_classes = (IsAdmin | ReadOnly,)
 
 
-class GenresViewSet(
-    mixins.CreateModelMixin,
-    mixins.DestroyModelMixin,
-    mixins.ListModelMixin,
-    GenericViewSet,
-):
+class GenresViewSet(CreateDeleteViewSet):
     serializer_class = GenresSerializer
     queryset = Genre.objects.all()
     filter_backends = (filters.SearchFilter,)
@@ -60,9 +59,9 @@ class TitlesViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAdmin | ReadOnly,)
 
     def get_serializer_class(self):
-        if self.request.method in (
-            "POST",
-            "PATCH",
+        if self.action in (
+                "create",
+                "partial_update",
         ):
             return TitlesSerializer
         return TitlesListSerializer
@@ -76,28 +75,23 @@ class UsersViewSet(viewsets.ModelViewSet):
     lookup_field = "username"
     permission_classes = (IsAdmin,)
 
-
-class UserInfo(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        queryset = User.objects.get(
-            username=request.user.username, email=request.user.email
-        )
-        serializer = UserSerializer(queryset)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def patch(self, request):
+    @action(detail=False, methods=["get", "patch"],
+            url_path="me", url_name="me",
+            permission_classes=[IsAuthenticated, ])
+    def about_me(self, request, pk=None):
         user = User.objects.get(
             username=request.user.username, email=request.user.email
         )
 
-        serializer = UserSerializer(user, data=request.data, partial=True)
+        serializer = UserSerializer(user)
 
-        if serializer.is_valid():
+        if request.method == "PATCH":
+            serializer = UserSerializer(
+                request.user, data=request.data, partial=True
+            )
+            serializer.is_valid(raise_exception=True)
             serializer.save(role=user.role)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class ReviewsViewSet(viewsets.ModelViewSet):

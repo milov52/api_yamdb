@@ -8,7 +8,7 @@ from api.views import (
     SignUp,
     TitlesViewSet,
     UsersViewSet,
-    UserInfo,
+    # UserInfo,
     ReviewsViewSet,
     CommentsViewSet,
 )
@@ -32,7 +32,7 @@ router.register(r"users", UsersViewSet)
 
 
 urlpatterns = [
-    path("v1/users/me/", UserInfo.as_view()),
+    # path("v1/users/me/", UserInfo.as_view()),
     path("v1/", include(router.urls)),
     path("v1/auth/signup/", SignUp.as_view()),
     path("v1/auth/token/", JWTTokenViewSet.as_view()),

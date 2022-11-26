@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Category, Genre, Title, User
+from .models import Category, Genre, Title
 
 
 @admin.register(Genre)
@@ -20,6 +20,3 @@ class TitlesAdmin(admin.ModelAdmin):
     list_display = ("id", "name", "year", "description", "category")
     list_filter = ("category", "year")
     search_fields = ("name",)
-
-
-admin.site.register(User)
