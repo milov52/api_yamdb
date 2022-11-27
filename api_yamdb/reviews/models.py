@@ -1,5 +1,6 @@
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+
 from users.models import User
 
 
@@ -26,7 +27,7 @@ class Title(models.Model):
     category = models.ForeignKey(
         Category, on_delete=models.SET_NULL, related_name="title", null=True
     )
-    genre = models.ManyToManyField(Genre, through="GenreTitles")
+    genre = models.ManyToManyField(Genre)
 
     def __str__(self):
         return self.name
@@ -91,27 +92,3 @@ class Comment(models.Model):
         ordering = ("-pub_date",)
         verbose_name = "Комментарий"
         verbose_name_plural = "Комментарии"
-
-
-class GenreTitles(models.Model):
-    title = models.ForeignKey(
-        Title,
-        on_delete=models.SET_NULL,
-        null=True,
-        verbose_name="Наименование",
-        related_name="title",
-    )
-    genre = models.ForeignKey(
-        Genre,
-        on_delete=models.SET_NULL,
-        null=True,
-        verbose_name="Жанр",
-        related_name="genre",
-    )
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["title", "genre"], name="unique_genres"
-            )
-        ]

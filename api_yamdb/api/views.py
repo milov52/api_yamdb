@@ -56,6 +56,7 @@ class GenresViewSet(CreateDeleteViewSet):
 class TitlesViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all().annotate(rating=Avg("reviews__score"))
     filterset_class = TitleFilter
+
     permission_classes = (IsAdmin | ReadOnly,)
 
     def get_serializer_class(self):

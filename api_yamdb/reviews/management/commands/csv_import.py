@@ -5,7 +5,7 @@ from django.core.management import BaseCommand
 
 from api_yamdb.settings import BASE_DIR
 from reviews.models import (
-    Category, Comment, Genre, GenreTitles, Review, Title, User
+    Category, Comment, Genre, Review, Title, User
 )
 
 MODEL_FILE = {
@@ -13,7 +13,6 @@ MODEL_FILE = {
     Genre: "genre.csv",
     Title: "titles.csv",
     User: "users.csv",
-    GenreTitles: "genre_title.csv",
     Review: "review.csv",
     Comment: "comments.csv",
 }
@@ -33,11 +32,6 @@ class Command(BaseCommand):
                 category = Category.objects.get(id=dct.pop("category"))
                 Model.objects.create(**dct, category=category)
 
-            elif Model.__name__ == "GenreTitles":
-                title = Title.objects.get(id=dct.pop("title_id"))
-                genre = Genre.objects.get(id=dct.pop("genre_id"))
-                Model.objects.create(**dct, title=title, genre=genre)
-
             elif Model.__name__ == "Review":
                 title = Title.objects.get(id=dct.pop("title_id"))
                 author = User.objects.get(id=dct.pop("author"))
@@ -54,3 +48,14 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         for model, filename in MODEL_FILE.items():
             self.import_data(model, filename)
+
+        print("Import Genre_title data")
+        path = os.path.join(BASE_DIR, "static/data", "genre_title.csv")
+        reader = list(DictReader(open(path, encoding="utf8")))
+
+        for dct in map(dict, reader):
+            title = Title.objects.get(id=dct.pop("title_id"))
+            genre = Genre.objects.get(id=dct.pop("genre_id"))
+            title.genre.add(genre)
+            title.save()
+        print("Import Genre_title data done")
