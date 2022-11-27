@@ -77,13 +77,10 @@ class UsersViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get", "patch"],
             url_path="me", url_name="me",
-            permission_classes=[IsAuthenticated, ])
+            permission_classes=[IsAuthenticated])
     def about_me(self, request, pk=None):
-        user = User.objects.get(
-            username=request.user.username, email=request.user.email
-        )
 
-        serializer = UserSerializer(user)
+        serializer = UserSerializer(request.user)
 
         if request.method == "PATCH":
             serializer = UserSerializer(
@@ -102,7 +99,6 @@ class ReviewsViewSet(viewsets.ModelViewSet):
         title = get_object_or_404(Title, id=self.kwargs["title_id"])
         return title.reviews.all()
 
-    #
     def perform_create(self, serializer):
         title = get_object_or_404(Title, id=self.kwargs["title_id"])
         serializer.save(title=title, author=self.request.user)
